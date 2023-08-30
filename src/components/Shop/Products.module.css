@@ -1,8 +1,17 @@
+.products {
+  background-color: #e8e8e8;
+  max-width: 35%;
+  border-radius: 15px;
+  padding: 0.3rem 0;
+  margin: 1rem 20%;
+}
+
 .products h2 {
-  color: white;
   margin: 2rem auto;
   text-align: center;
   text-transform: uppercase;
+  font-size: 1.2rem;
+  
 }
 
 .products ul {

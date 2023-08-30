@@ -4,6 +4,7 @@ const initialState = {
   showCart: false,
   items: [],
   totalPrice: 0,
+  checked:false,
 };
 
 const cartSlice = createSlice({
@@ -12,6 +13,13 @@ const cartSlice = createSlice({
   reducers: {
     onCart: (state) => {
       state.showCart = !state.showCart;
+    },
+    replaceCartItem: (state, action) => {
+      state.items = action.payload;
+      state.totalPrice = action.payload.reduce(
+        (total, item) => total + item.qty * item.price,
+        0
+      );
     },
     addCartItem: (state, action) => {
       // payload : item
@@ -24,6 +32,7 @@ const cartSlice = createSlice({
         state.items.push(action.payload);
       }
       state.totalPrice += action.payload.price;
+      state.checked = true;
     },
     removeCartItem: (state, action) => {
       // payload : id
@@ -34,6 +43,7 @@ const cartSlice = createSlice({
         findItem.qty -= 1;
       }
       state.totalPrice -= findItem.price;
+      state.checked = true;
     },
   },
 });

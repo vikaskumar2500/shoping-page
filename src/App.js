@@ -17,6 +17,33 @@ function App() {
   const notification = useSelector((state) => state.error.notification);
 
   useEffect(() => {
+    const fetchCartData = async () => {
+      const response = await fetch(
+        "https://shoping-page-default-rtdb.europe-west1.firebasedatabase.app/cart.json"
+      );
+
+      if (!response.ok) throw new Error("error");
+      // console.log(data.items);
+      const data = await response.json();
+      return data.items || [];
+    };
+
+    fetchCartData()
+      .then((data) => {
+        dispatch(cartActions.replaceCartItem(data));
+      })
+      .catch((error) => {
+        dispatch(
+          uiActions.showNotification({
+            status: "error",
+            title: "Error!",
+            message: "Sending cart data failed!",
+          })
+        );
+      });
+  }, [dispatch]);
+
+  useEffect(() => {
     const sendCartData = async () => {
       dispatch(
         uiActions.showNotification({
@@ -49,49 +76,12 @@ function App() {
       );
     };
 
-    const fetchCartData = async () => {
-      dispatch(
-        uiActions.showNotification({
-          status: "pending",
-          title: "Sending...",
-          message: "Sending cart data!",
-        })
-      );
-
-      const response = await fetch(
-        "https://shoping-page-default-rtdb.europe-west1.firebasedatabase.app/cart.json"
-      );
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
-      // console.log(data.items);
-      data.items.forEach((item)=> {
-        dispatch(cartActions.addCartItem(item));
-      })
-      
-
-      dispatch(
-        uiActions.showNotification({
-          status: "success",
-          title: "Success!",
-          message: "Sent cart data successfully!",
-        })
-      );
-    };
-
     if (isInitial) {
       isInitial = false;
-      // fetching the data;
-      fetchCartData().catch((error) => {
-        dispatch(
-          uiActions.showNotification({
-            status: "error",
-            title: "Error!",
-            message: "Sending cart data failed!",
-          })
-        );
-      });
-    } else
+      return;
+    }
+
+    if (cart.checked)
       sendCartData().catch((error) => {
         dispatch(
           uiActions.showNotification({

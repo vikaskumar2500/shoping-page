@@ -1,45 +1,98 @@
-import { useEffect } from "react";
+import { Fragment, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+
 import Cart from "./components/Cart/Cart";
 import Layout from "./components/Layout/Layout";
 import Products from "./components/Shop/Products";
-import { useSelector, useDispatch } from "react-redux";
 import { uiActions } from "./store/uiReducer";
 import Notification from "./components/UI/Notification";
+import { cartActions } from "./store/cartReducer";
+
+let isInitial = true;
 
 function App() {
   const dispatch = useDispatch();
-
   const showCart = useSelector((state) => state.cart.showCart);
   const cart = useSelector((state) => state.cart);
-  let notification = useSelector(state=> state.error.notification);
+  const notification = useSelector((state) => state.error.notification);
+
   useEffect(() => {
-    dispatch(
-      uiActions.showNotification({
-        status: "pending",
-        title: "Sending...",
-        message: "Sending cart data!",
-      })
-    );
-    fetch(
-      "https://shoping-page-default-rtdb.europe-west1.firebasedatabase.app/cart.json",
-      {
-        method: "PUT",
-        body: JSON.stringify(cart),
-        headers: {
-          "Content-Type": "application/json",
-        },
+    const sendCartData = async () => {
+      dispatch(
+        uiActions.showNotification({
+          status: "pending",
+          title: "Sending...",
+          message: "Sending cart data!",
+        })
+      );
+      const response = await fetch(
+        "https://shoping-page-default-rtdb.europe-west1.firebasedatabase.app/cart.json",
+        {
+          method: "PUT",
+          body: JSON.stringify(cart),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Sending cart data failed.");
       }
-    )
-      .then(() => {
+
+      dispatch(
+        uiActions.showNotification({
+          status: "success",
+          title: "Success!",
+          message: "Sent cart data successfully!",
+        })
+      );
+    };
+
+    const fetchCartData = async () => {
+      dispatch(
+        uiActions.showNotification({
+          status: "pending",
+          title: "Sending...",
+          message: "Sending cart data!",
+        })
+      );
+
+      const response = await fetch(
+        "https://shoping-page-default-rtdb.europe-west1.firebasedatabase.app/cart.json"
+      );
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      // console.log(data.items);
+      data.items.forEach((item)=> {
+        dispatch(cartActions.addCartItem(item));
+      })
+      
+
+      dispatch(
+        uiActions.showNotification({
+          status: "success",
+          title: "Success!",
+          message: "Sent cart data successfully!",
+        })
+      );
+    };
+
+    if (isInitial) {
+      isInitial = false;
+      // fetching the data;
+      fetchCartData().catch((error) => {
         dispatch(
           uiActions.showNotification({
-            status: "success",
-            title: "Success!",
-            message: "Send cart data successfully!",
+            status: "error",
+            title: "Error!",
+            message: "Sending cart data failed!",
           })
         );
-      })
-      .catch(() => {
+      });
+    } else
+      sendCartData().catch((error) => {
         dispatch(
           uiActions.showNotification({
             status: "error",
@@ -50,14 +103,8 @@ function App() {
       });
   }, [cart, dispatch]);
 
-  if(notification.status === 'success') {
-    setTimeout(()=> {
-      notification = null;
-    }, 3e3);
-  }
-  console.log(notification);
   return (
-    <Layout>
+    <Fragment>
       {notification && (
         <Notification
           status={notification.status}
@@ -65,9 +112,11 @@ function App() {
           message={notification.message}
         />
       )}
-      {showCart && <Cart />}
-      <Products />
-    </Layout>
+      <Layout>
+        {showCart && <Cart />}
+        <Products />
+      </Layout>
+    </Fragment>
   );
 }
 
